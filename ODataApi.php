@@ -1,5 +1,9 @@
 <?php
-
+/**
+ *
+ * github https://github.com/Primenko/ODataApi/blob/master/ODataApi.php
+ *
+ */
 
 namespace ODataApi;
 
