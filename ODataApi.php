@@ -82,13 +82,17 @@ class ODataApi
     /**
      * @return bool|string
      */
-    public function query()
+    public function query($metaData = false)
     {
         $url = $this->url;
         $ch = curl_init();
 
-        if (!empty($this->urlParams))
+        if (!empty($this->urlParams) && !$metaData)
             $url .= $this->urlParams;
+
+        if ($metaData)
+            $url .= '/$metadata';
+
 
         curl_setopt($ch, CURLOPT_URL, $url);
 
@@ -100,5 +104,41 @@ class ODataApi
         curl_close($ch);
 
         return $data;
+    }
+
+    /**
+     * @return bool|string
+     */
+    public function queryTypes()
+    {
+        $url = $this->url;
+        $ch = curl_init();
+
+        curl_setopt($ch, CURLOPT_URL, $url);
+
+        if (!empty($this->header))
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
+
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        $data = curl_exec($ch);
+        curl_close($ch);
+
+        return $data;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getMetaData()
+    {
+        return $this->query(true);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getData()
+    {
+        return $this->query();
     }
 }
