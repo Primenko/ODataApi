@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * github https://github.com/Primenko/ODataApi/blob/master/ODataApi.php
+ * github https://github.com/Primenko/ODataApi.php
  *
  */
 
