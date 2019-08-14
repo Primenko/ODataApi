@@ -1,7 +1,7 @@
 <?php
 /**
  *
- * github https://github.com/Primenko/ODataApi.php
+ * github https://github.com/Primenko/ODataApi.git
  *
  */
 
@@ -27,6 +27,11 @@ class ODataApi
      * @var array
      */
     private $header;
+
+    /**
+     * @var boolean
+     */
+    private $gzip;
 
     /**
      * @var string
@@ -72,6 +77,14 @@ class ODataApi
     }
 
     /**
+     * @param $gzip
+     */
+    public function setGzip($bool)
+    {
+        $this->gzip = $bool;
+    }
+
+    /**
      * @param $urlParams
      */
     public function setUrlParams($urlParams)
@@ -85,6 +98,8 @@ class ODataApi
     public function query($metaData = false)
     {
         $url = $this->url;
+
+
         $ch = curl_init();
 
         if (!empty($this->urlParams) && !$metaData)
@@ -93,8 +108,9 @@ class ODataApi
         if ($metaData)
             $url .= '/$metadata';
 
-
         curl_setopt($ch, CURLOPT_URL, $url);
+
+
 
         if (!empty($this->header))
             curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
@@ -118,6 +134,9 @@ class ODataApi
 
         if (!empty($this->header))
             curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
+
+        if (!empty($this->gzip))
+            curl_setopt($ch,CURLOPT_ENCODING, "gzip,deflate");
 
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $data = curl_exec($ch);
