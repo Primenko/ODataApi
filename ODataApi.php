@@ -26,12 +26,17 @@ class ODataApi
     /**
      * @var array
      */
-    private $header;
+    private $header = [];
 
     /**
-     * @var boolean
+     * @var boolean $compress
      */
-    private $gzip;
+    private $compress = false;
+
+    /**
+     * @var string $compressType  ''|deflate|gzip|identity|deflate,gzip
+     */
+    public $compressType = '';
 
     /**
      * @var string
@@ -69,19 +74,25 @@ class ODataApi
     }
 
     /**
-     * @param $header
+     * @param array $header
      */
-    public function setHeader($header)
+    public function setHeader(array $header)
     {
-        $this->header = $header;
+        if (!empty($this->header))
+            $this->header = $header;
+        else
+            $this->header = array_merge($this->header, $header);
     }
 
     /**
      * @param $gzip
      */
-    public function setGzip($bool)
+    public function setCompress($bool = false, $type = '')
     {
-        $this->gzip = $bool;
+        if ($bool) {
+            $this->compress = $bool;
+            $this->compressType = $type;
+        }
     }
 
     /**
@@ -99,48 +110,43 @@ class ODataApi
     {
         $url = $this->url;
 
-
-        $ch = curl_init();
-
         if (!empty($this->urlParams) && !$metaData)
             $url .= $this->urlParams;
 
         if ($metaData)
             $url .= '/$metadata';
 
-        curl_setopt($ch, CURLOPT_URL, $url);
 
-
-
-        if (!empty($this->header))
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
-
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        $data = curl_exec($ch);
-        curl_close($ch);
-
-        return $data;
-    }
-
-    /**
-     * @return bool|string
-     */
-    public function queryTypes()
-    {
-        $url = $this->url;
         $ch = curl_init();
-
         curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        if ($this->compress)
+            if (PHP_VERSION > 7)
+                curl_setopt($ch,CURLOPT_ENCODING, $this->compressType);
+            else
+                $this->header = array_merge($this->header, ['Accept-Encoding: '.$this->compressType]);
 
         if (!empty($this->header))
             curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
 
-        if (!empty($this->gzip))
-            curl_setopt($ch,CURLOPT_ENCODING, "gzip,deflate");
-
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         $data = curl_exec($ch);
         curl_close($ch);
+
+        if (preg_match('/"code":500/', $data)) {
+            echo $this->urlParams . "\n";
+            throw new \Exception($data);
+            exit;
+        }
+
+        if (preg_match('/"code":401/', $data)) {
+            echo $this->urlParams . "\n";
+            throw new \Exception($data);
+            exit;
+        }
+
+        if ($this->compress)
+            $data = gzdecode($data);
 
         return $data;
     }
