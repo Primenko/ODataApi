@@ -109,13 +109,6 @@ class ODataApi
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
-
-        echo "\n".__FILE__.": ".__LINE__."\n";
-        echo "\n";
-        print_r($url);
-        echo "\n";
-//        die;
-
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         if ($this->compress) {
             if (PHP_VERSION > 7) curl_setopt($ch, CURLOPT_ENCODING, $this->compressType);
