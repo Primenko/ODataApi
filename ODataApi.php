@@ -17,32 +17,26 @@ class ODataApi
      * @var string
      */
     private $hash;
-
     /**
      * @var string
      */
     private $url;
-
     /**
      * @var array
      */
     private $header = [];
-
     /**
      * @var boolean $compress
      */
     private $compress = false;
-
     /**
-     * @var string $compressType  ''|deflate|gzip|identity|deflate,gzip
+     * @var string $compressType ''|deflate|gzip|identity|deflate,gzip
      */
     public $compressType = '';
-
     /**
      * @var string
      */
     private $urlParams;
-
     // using in API OData
     public $filter;
     public $orderby;
@@ -78,10 +72,11 @@ class ODataApi
      */
     public function setHeader(array $header)
     {
-        if (!empty($this->header))
+        if (!empty($this->header)) {
             $this->header = $header;
-        else
+        } else {
             $this->header = array_merge($this->header, $header);
+        }
     }
 
     /**
@@ -109,44 +104,57 @@ class ODataApi
     public function query($metaData = false)
     {
         $url = $this->url;
-
-        if (!empty($this->urlParams) && !$metaData)
-            $url .= $this->urlParams;
-
-        if ($metaData)
-            $url .= '/$metadata';
-
+        if (!empty($this->urlParams) && !$metaData) $url .= $this->urlParams;
+        if ($metaData) $url .= '/$metadata';
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
+
+        echo "\n".__FILE__.": ".__LINE__."\n";
+        echo "\n";
+        print_r($url);
+        echo "\n";
+//        die;
+
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        if ($this->compress) {
+            if (PHP_VERSION > 7) curl_setopt($ch, CURLOPT_ENCODING, $this->compressType);
+            else $this->header = array_merge($this->header, ['Accept-Encoding: ' . $this->compressType]);
+        }
 
-        if ($this->compress)
-            if (PHP_VERSION > 7)
-                curl_setopt($ch,CURLOPT_ENCODING, $this->compressType);
-            else
-                $this->header = array_merge($this->header, ['Accept-Encoding: '.$this->compressType]);
-
-        if (!empty($this->header))
-            curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
+        if (!empty($this->header)) curl_setopt($ch, CURLOPT_HTTPHEADER, $this->header);
 
         $data = curl_exec($ch);
+
         curl_close($ch);
+
+
+
+        if ($this->compress) {
+            try {
+                $data = gzdecode($data);
+
+            } catch (\Exception $e) {
+                echo 'invalid format data gzdecode';
+            }
+        }
 
         if (preg_match('/"code":500/', $data)) {
             echo $this->urlParams . "\n";
             throw new \Exception($data);
             exit;
         }
-
         if (preg_match('/"code":401/', $data)) {
             echo $this->urlParams . "\n";
             throw new \Exception($data);
             exit;
         }
 
-        if ($this->compress)
-            $data = gzdecode($data);
+        if (preg_match('/"code":400/', $data)) {
+            echo $this->urlParams . "\n";
+            throw new \Exception($data);
+            exit;
+        }
 
         return $data;
     }
